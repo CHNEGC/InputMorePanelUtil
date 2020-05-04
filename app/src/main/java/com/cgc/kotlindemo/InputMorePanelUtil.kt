@@ -10,6 +10,7 @@ import android.view.View
 import android.view.animation.LinearInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.fragment.app.Fragment
 import kotlinx.android.synthetic.main.activity_main.*
 
 /**
@@ -31,9 +32,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
     private var mInputEditText: EditText? = null
     private var mMoreBottom: View? = null
     private var mVoiceBottom: View? = null
+    private var mVoiceShowView: View? = null
     private var mMotionBottom: View? = null
     private var mContentView: View? = null
-    private var mMorePanelView: View? = null
+    private var mMoreContentView: View? = null
+    private var mMorePanelFragment: Fragment? = null
+    private var mMotionPanelFragment: Fragment? = null
 
     init {
         //监听获取软键盘的高度
@@ -118,12 +122,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                             //软键盘隐藏状态
                             when (mMorePanelState) {
                                 MORE_PANEL_STATE_HIND -> {
-                                    mMorePanelView?.visibility = View.GONE
+                                    mMoreContentView?.visibility = View.GONE
                                     //更多面板隐藏状态
                                     showMorePanel()
                                     showSoftInput()
                                     mInputEditText?.postDelayed({
-                                        mMorePanelView?.visibility = View.VISIBLE
+                                        mMoreContentView?.visibility = View.VISIBLE
                                     }, 300)
                                 }
                                 MORE_PANEL_STATE_SHOW -> {
@@ -151,7 +155,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         this.mMoreBottom?.setOnClickListener { v: View? ->
             when (mSoftKeyBoardState) {
                 SOFT_KEY_BOARD_STATE_SHOW -> {//软键盘显示
-                    mMorePanelView?.visibility = View.VISIBLE
+                    mMoreContentView?.visibility = View.VISIBLE
                     hideSoftInput()
                     mInputEditText?.clearFocus()
                 }
@@ -161,7 +165,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                             showSoftInput()
                         }
                         MORE_PANEL_STATE_HIND -> {
-                            mMorePanelView?.visibility = View.VISIBLE
+                            mMoreContentView?.visibility = View.VISIBLE
                             showMorePanel()
                         }
                     }
@@ -180,8 +184,8 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
 
     /**绑定更多面板*/
     fun bindMorePanelView(mMorePanel: View?): InputMorePanelUtil {
-        this.mMorePanelView = mMorePanel
-        this.mMorePanelView?.visibility = View.GONE
+        this.mMoreContentView = mMorePanel
+        this.mMoreContentView?.visibility = View.GONE
         return this
     }
 
@@ -196,7 +200,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         this.mMotionBottom?.setOnClickListener { v: View? ->
             when (mSoftKeyBoardState) {
                 SOFT_KEY_BOARD_STATE_SHOW -> {//软键盘显示
-                    mMorePanelView?.visibility = View.VISIBLE
+                    mMoreContentView?.visibility = View.VISIBLE
                     hideSoftInput()
                 }
                 SOFT_KEY_BOARD_STATE_HIND -> {//软键盘没有显示
@@ -205,7 +209,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                             showSoftInput()
                         }
                         MORE_PANEL_STATE_HIND -> {
-                            mMorePanelView?.visibility = View.VISIBLE
+                            mMoreContentView?.visibility = View.VISIBLE
                             showMorePanel()
                         }
                     }
@@ -236,7 +240,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                 addUpdateListener {
                     val v: Float = it.animatedValue as Float
                     translationY = v
-                    mMorePanelView?.translationY = v
+                    mMoreContentView?.translationY = v
                 }
                 interpolator = LinearInterpolator()
                 start()
