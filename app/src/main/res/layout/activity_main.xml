@@ -19,24 +19,45 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:orientation="horizontal"
             android:padding="5dp"
+            android:animateLayoutChanges="true"
             android:layout_height="50dp">
 
             <Button
                 android:id="@+id/btnSwitchVoice"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 android:layout_width="60dp"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintHorizontal_bias="0"
+                app:layout_constraintEnd_toStartOf="@id/et"
                 android:text="语音"
                 android:layout_height="wrap_content" />
 
             <EditText
                 android:id="@+id/et"
+                app:layout_constraintStart_toEndOf="@id/btnSwitchVoice"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:background="#ffffff"
+                app:layout_constraintEnd_toStartOf="@id/btnEmotion"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:id="@+id/tvLongVoice"
+                android:layout_width="0dp"
+                android:visibility="gone"
+                app:layout_constraintEnd_toStartOf="@id/btnEmotion"
+                app:layout_constraintStart_toEndOf="@id/btnSwitchVoice"
+                app:layout_constraintTop_toTopOf="parent"
+                android:text="长按录音"
+                android:textColor="#999999"
+                android:background="#FFFFFF"
+                android:textSize="18sp"
+                android:gravity="center"
                 android:layout_height="match_parent" />
 
             <Button
@@ -44,6 +65,8 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:layout_width="60dp"
                 android:text="表情"
+                app:layout_constraintStart_toEndOf="@id/et"
+                app:layout_constraintEnd_toStartOf="@id/btnMore"
                 android:layout_height="wrap_content" />
 
             <Button
@@ -51,8 +74,9 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:layout_width="60dp"
                 android:text="Login"
+                app:layout_constraintEnd_toEndOf="parent"
                 android:layout_height="wrap_content" />
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <View
             android:background="#ff9999"
@@ -60,10 +84,10 @@
             android:layout_height="50dp" />
     </LinearLayout>
 
-    <View
+    <FrameLayout
         android:id="@+id/view2"
         app:layout_constraintTop_toBottomOf="@id/view"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="100dp"
         android:background="#ff0000" />
 </androidx.constraintlayout.widget.ConstraintLayout>
