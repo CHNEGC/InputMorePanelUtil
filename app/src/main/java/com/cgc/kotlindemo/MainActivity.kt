@@ -33,31 +33,20 @@ class MainActivity : AppCompatActivity() {
 
         mListView.apply {
             adapter = ListAdapter(this@MainActivity)
-//            setOnScrollListener(object : AbsListView.OnScrollListener {
-//                override fun onScroll(
-//                    view: AbsListView?,
-//                    firstVisibleItem: Int,
-//                    visibleItemCount: Int,
-//                    totalItemCount: Int
-//                ) {
-//                    mInputMorePanelUtil?.manualHintMorePanel()
-//                }
-//
-//                override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
-//                    mInputMorePanelUtil?.manualHintMorePanel()
-//                }
-//
-//            })
             setOnTouchListener(View.OnTouchListener { v, event ->
                 mInputMorePanelUtil?.manualHintMorePanel()
                 return@OnTouchListener false
             })
+            post {
+                setSelection(adapter.count - 1)
+            }
         }
 
         mInputMorePanelUtil = InputMorePanelUtil.with(this, supportFragmentManager).apply {
             bindContentView(mView)
             bindInputEditText(mEditText)
             bindMorePanelView(mView2)
+            bindListView(mListView)
             bindMotionBottom(findViewById(R.id.btnEmotion)) {
                 when (it) {
                     MOTION_SOFT_KEY_BOARD_INPUT -> {
