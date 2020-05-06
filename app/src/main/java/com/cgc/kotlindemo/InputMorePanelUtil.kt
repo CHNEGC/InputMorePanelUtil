@@ -181,12 +181,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                             .otherwise {
                                 inputEditClick()
                             }
-                        return@setOnTouchListener true
+                        true
                     }
                 }
             }
 
-            return@setOnTouchListener true
+            true
         }
         return this
     }
@@ -240,7 +240,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         this.mListView = mListView
         this.mListView?.setOnTouchListener(View.OnTouchListener { v, event ->
             manualHintMorePanel()
-            return@OnTouchListener false
+            false
         })
         return this
     }
