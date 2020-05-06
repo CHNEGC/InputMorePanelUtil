@@ -33,10 +33,6 @@ class MainActivity : AppCompatActivity() {
 
         mListView.apply {
             adapter = ListAdapter(this@MainActivity)
-            setOnTouchListener(View.OnTouchListener { v, event ->
-                mInputMorePanelUtil?.manualHintMorePanel()
-                return@OnTouchListener false
-            })
             post {
                 setSelection(adapter.count - 1)
             }

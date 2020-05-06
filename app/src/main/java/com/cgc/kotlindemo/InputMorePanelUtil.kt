@@ -235,8 +235,13 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
     }
 
     /**绑定列表*/
+    @SuppressLint("ClickableViewAccessibility")
     fun bindListView(mListView: ListView?): InputMorePanelUtil {
         this.mListView = mListView
+        this.mListView?.setOnTouchListener(View.OnTouchListener { v, event ->
+            manualHintMorePanel()
+            return@OnTouchListener false
+        })
         return this
     }
 
