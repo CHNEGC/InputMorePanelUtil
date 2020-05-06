@@ -33,6 +33,25 @@ class MainActivity : AppCompatActivity() {
 
         mListView.apply {
             adapter = ListAdapter(this@MainActivity)
+//            setOnScrollListener(object : AbsListView.OnScrollListener {
+//                override fun onScroll(
+//                    view: AbsListView?,
+//                    firstVisibleItem: Int,
+//                    visibleItemCount: Int,
+//                    totalItemCount: Int
+//                ) {
+//                    mInputMorePanelUtil?.manualHintMorePanel()
+//                }
+//
+//                override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
+//                    mInputMorePanelUtil?.manualHintMorePanel()
+//                }
+//
+//            })
+            setOnTouchListener(View.OnTouchListener { v, event ->
+                mInputMorePanelUtil?.manualHintMorePanel()
+                return@OnTouchListener false
+            })
         }
 
         mInputMorePanelUtil = InputMorePanelUtil.with(this, supportFragmentManager).apply {
@@ -62,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                     VOICE_INPUT -> {
                         //录音状态
                         tvLongVoice.visibility = View.VISIBLE
-                        mEditText.visibility = View.GONE
+                        mEditText.visibility = View.INVISIBLE
                         btnSwitchVoice.text = "键盘"
                     }
                 }
@@ -85,62 +104,17 @@ class MainActivity : AppCompatActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
-//    fun onLogin(view: View) {
-//        mView.apply {
-//            when (isShowMorePage) {
-//                false -> {
-//                    openMorePage(mView)
-//                }
-//                true -> {
-//                    closeMorePage(mView)
-//                }
-//            }
-//        }
-//    }
-
-//    private fun openMorePage(mView: View?, startValue: Float = 0f, endValue: Float = 750f) {
-//        isShowMorePage = true
-//        mView?.apply {
-//            val mValueAnimation: ValueAnimator = ValueAnimator.ofFloat(startValue, -endValue)
-//            mValueAnimation.apply {
-//                duration = 300
-//                addUpdateListener {
-//                    val v: Float = it.animatedValue as Float
-//                    translationY = v
-//                    mView2.translationY = v
-//                }
-//                interpolator = LinearInterpolator()
-//                start()
-//            }
-//        }
-//    }
-//
-//    private fun closeMorePage(mView: View?, startValue: Float = 750f, endValue: Float = 0f) {
-//        isShowMorePage = false
-//        mView?.apply {
-//            val mValueAnimation: ValueAnimator = ValueAnimator.ofFloat(-startValue, endValue)
-//            mValueAnimation.apply {
-//                duration = 300
-//                addUpdateListener {
-//                    val v: Float = it.animatedValue as Float
-//                    translationY = v
-//                    mView2.translationY = v
-//                }
-//                interpolator = LinearInterpolator()
-//                start()
-//            }
-//        }
-//    }
-//
-//    fun onLoginOut(view: View) {
-//        mView.apply {
-//
-//        }
-//    }
-
     class ListAdapter(private val mContext: Context) : BaseAdapter() {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            return View.inflate(mContext, R.layout.view_item, null)
+            var convertView = View.inflate(mContext, R.layout.view_item, null)
+            convertView.findViewById<Button>(R.id.btn).setOnClickListener {
+                Toast.makeText(mContext, "点击$position", Toast.LENGTH_SHORT).show()
+            }
+            convertView.findViewById<Button>(R.id.btn).setOnLongClickListener {
+                Toast.makeText(mContext, "长按$position", Toast.LENGTH_SHORT).show()
+                return@setOnLongClickListener false
+            }
+            return convertView
         }
 
         override fun getItem(position: Int): Any {

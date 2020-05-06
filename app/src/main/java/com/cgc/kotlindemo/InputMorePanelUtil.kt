@@ -11,9 +11,11 @@ import android.view.animation.LinearInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
+import androidx.annotation.NonNull
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
+import com.cgc.kotlindemo.ext.yes
 import kotlinx.android.synthetic.main.activity_main.*
 
 /**
@@ -31,6 +33,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
     private var mSoftKeyBoardState: Int = SOFT_KEY_BOARD_STATE_HIND
     private var mCurrentClickState: Int = -1
     private var mSoftKeyBoardHeight: Float = 0f
+    private var mOldTimeLong: Long = 0
 
 
     //软键盘管理类
@@ -40,7 +43,6 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
     private var mInputEditText: EditText? = null
     private var mMoreBottom: View? = null
     private var mVoiceBottom: View? = null
-    private var mVoiceShowView: View? = null
     private var mMotionBottom: View? = null
     private var mContentView: View? = null
     private var mMoreContentView: FrameLayout? = null
@@ -49,6 +51,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
     private var mFragmentManager: FragmentManager? = null
     private var mOnVoiceClickListenerCallBack: ((mVoiceClickState: Int) -> Unit)? = null
     private var mOnMotionClickListenerCallBack: ((mMotionClickState: Int) -> Unit)? = null
+
+    private constructor(mActivity: Activity, mFragmentManager: FragmentManager? = null) : this(
+        mActivity
+    ) {
+        this.mFragmentManager = mFragmentManager
+    }
 
     init {
         //监听获取软键盘的高度
@@ -60,13 +68,13 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                     resetMoreContentPanelHeight(height.toFloat())
                 }, DURATION.plus(50))
                 mMoreContentView?.layoutParams?.height = height
-                saveSoftKeyHeightToCache(sp, height.toFloat())
+                saveSoftKeyHeightToCache(height.toFloat())
             }
 
             override fun keyBoardHide(height: Int) {
                 mSoftKeyBoardState = SOFT_KEY_BOARD_STATE_HIND
                 mSoftKeyBoardHeight = height.toFloat()
-                saveSoftKeyHeightToCache(sp, height.toFloat())
+                saveSoftKeyHeightToCache(height.toFloat())
                 mMoreContentView?.layoutParams?.height = height
                 if (mCurrentClickState == CLICK_HINT_SOFT_KEY_BOARD) {
                     mCurrentClickState = -1
@@ -74,6 +82,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
                 }
             }
         })
+
+        mInputManager =
+            mActivity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        sp = mActivity.getSharedPreferences(SHARE_PREFERENCE_NAME, Context.MODE_PRIVATE)
+        //获取保存的软键盘高度
+        mSoftKeyBoardHeight = getCacheSoftKeyHeight()
     }
 
 
@@ -121,38 +135,31 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         private const val SHARE_PREFERENCE_SOFT_INPUT_HEIGHT = "soft_input_height"
 
         fun with(
+            @NonNull
             mActivity: Activity,
             mFragmentManager: FragmentManager? = null
         ): InputMorePanelUtil {
-            val mInputMorePanelUtil = InputMorePanelUtil(mActivity)
-            mInputMorePanelUtil.mFragmentManager = mFragmentManager
-            mInputMorePanelUtil.mInputManager =
-                mActivity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            mInputMorePanelUtil.sp =
-                mActivity.getSharedPreferences(SHARE_PREFERENCE_NAME, Context.MODE_PRIVATE)
-            //获取保存的软键盘高度
-            mInputMorePanelUtil.mSoftKeyBoardHeight = getCacheSoftKeyHeight(mInputMorePanelUtil.sp)
-            return mInputMorePanelUtil
+            return InputMorePanelUtil(mActivity, mFragmentManager)
         }
+    }
 
-        /**保存软件盘高度到本地*/
-        fun saveSoftKeyHeightToCache(sp: SharedPreferences?, mSoftHeight: Float) {
-            //存一份到本地
-            if (mSoftHeight > 0) {
-                sp?.edit()?.putFloat(
-                    SHARE_PREFERENCE_SOFT_INPUT_HEIGHT,
-                    mSoftHeight
-                )?.apply()
-            }
-        }
-
-        /**获取本地保存的软键盘高度*/
-        private fun getCacheSoftKeyHeight(sp: SharedPreferences?): Float {
-            return sp?.getFloat(
+    /**保存软件盘高度到本地*/
+    private fun saveSoftKeyHeightToCache(mSoftHeight: Float) {
+        //存一份到本地
+        if (mSoftHeight > 0) {
+            sp?.edit()?.putFloat(
                 SHARE_PREFERENCE_SOFT_INPUT_HEIGHT,
-                741f
-            ) ?: 741f
+                mSoftHeight
+            )?.apply()
         }
+    }
+
+    /**获取本地保存的软键盘高度*/
+    private fun getCacheSoftKeyHeight(): Float {
+        return sp?.getFloat(
+            SHARE_PREFERENCE_SOFT_INPUT_HEIGHT,
+            741f
+        ) ?: 741f
     }
 
     /**绑定编辑框*/
@@ -162,27 +169,32 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         this.mInputEditText?.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_UP -> {
-                    mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
-                    when (mSoftKeyBoardState) {
-                        SOFT_KEY_BOARD_STATE_HIND -> {
-                            //软键盘隐藏状态
-                            when (mMorePanelState) {
-                                MORE_PANEL_STATE_HIND -> {
-                                    //更多面板隐藏状态
-                                    morePanelGONE()
-                                    showMorePanel()
-                                    showSoftInput()
-                                }
-                                MORE_PANEL_STATE_SHOW -> {
-                                    //如果面板已经显示就直接显示软键盘
-                                    showSoftInput()
+                    isNotDoubleClick().yes {
+                        mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
+                        when (mSoftKeyBoardState) {
+                            SOFT_KEY_BOARD_STATE_HIND -> {
+                                //软键盘隐藏状态
+                                when (mMorePanelState) {
+                                    MORE_PANEL_STATE_HIND -> {
+                                        //更多面板隐藏状态
+                                        morePanelGONE()
+                                        showMorePanel()
+                                        mVoiceBottom?.postDelayed({
+                                            showSoftInput()
+                                        }, 50)
+                                    }
+                                    MORE_PANEL_STATE_SHOW -> {
+                                        //如果面板已经显示就直接显示软键盘
+                                        showSoftInput()
+                                    }
                                 }
                             }
-                        }
-                        SOFT_KEY_BOARD_STATE_SHOW -> {
-                            //软键盘显示
+                            SOFT_KEY_BOARD_STATE_SHOW -> {
+                                //软键盘显示
 
+                            }
                         }
+                        return@setOnTouchListener true
                     }
                 }
             }
@@ -209,28 +221,36 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
 
     /**绑定切换语音录入按钮*/
     fun bindVoiceBottom(
-        mVoiceBottom: View,
+        mVoiceBottom: View?,
         mOnVoiceClickListenerCallBack: ((mVoiceClickState: Int) -> Unit)? = null
     ): InputMorePanelUtil {
         this.mVoiceBottom = mVoiceBottom
         this.mOnVoiceClickListenerCallBack = mOnVoiceClickListenerCallBack
         this.mVoiceBottom?.setOnClickListener {
-            when (mCurrentVoiceClickState) {
-                VOICE_SOFT_KEY_BOARD_INPUT -> {
-                    if (mSoftKeyBoardState == SOFT_KEY_BOARD_STATE_SHOW ||
-                        mMorePanelState == MORE_PANEL_STATE_SHOW
-                    ) {
-                        mVoiceBottom.postDelayed({hintMorePanel()
-                            hideSoftInput()},100)
+            isNotDoubleClick().yes {
+                switchVoiceIcon()
+                when (mCurrentVoiceClickState) {
+                    VOICE_SOFT_KEY_BOARD_INPUT -> {
+                        morePanelGONE()
+                        showMorePanel()
+                        mVoiceBottom?.postDelayed({
+                            showSoftInput()
+                        }, 50)
+                    }
+                    VOICE_INPUT -> {
+                        (mSoftKeyBoardState == SOFT_KEY_BOARD_STATE_SHOW ||
+                                mMorePanelState == MORE_PANEL_STATE_SHOW
+                                ).yes {
+                                hideSoftInput()
+                                mVoiceBottom?.postDelayed({
+                                    hintMorePanel()
+                                }, 50)
+                            }
+                    }
+                    else -> {
                     }
                 }
-                VOICE_INPUT -> {
-                    morePanelGONE()
-                    showMorePanel()
-                    showSoftInput()
-                }
             }
-            switchVoiceIcon()
         }
         return this
     }
@@ -255,10 +275,14 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         this.mMotionBottom = mMotionBottom
         this.mOnMotionClickListenerCallBack = mOnMotionClickListenerCallBack
         this.mMotionBottom?.setOnClickListener { v: View? ->
-            mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
-            mInputEditText?.requestFocus()
-            onClick(LOAD_SHOW_MOTION_INPUT_PANEL)
-            switchMotionIcon()
+            isNotDoubleClick().yes {
+                mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
+                mCurrentVoiceClickState = VOICE_INPUT
+                switchVoiceIcon()
+                onClick(LOAD_SHOW_MOTION_INPUT_PANEL)
+                switchMotionIcon()
+                mInputEditText?.requestFocus()
+            }
         }
         return this
     }
@@ -267,10 +291,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
     fun bindMoreBottom(mMoreBottom: View?): InputMorePanelUtil {
         this.mMoreBottom = mMoreBottom
         this.mMoreBottom?.setOnClickListener { v: View? ->
-            mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
-            mInputEditText?.clearFocus()
-            onClick(LOAD_SHOW_MORE_INPUT_PANEL)
-            onDefault()
+            isNotDoubleClick().yes {
+                mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
+                mInputEditText?.clearFocus()
+                onClick(LOAD_SHOW_MORE_INPUT_PANEL)
+                onDefault()
+            }
         }
         return this
     }
@@ -287,11 +313,12 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
             SOFT_KEY_BOARD_STATE_HIND -> {//软键盘没有显示
                 when (mMorePanelState) {
                     MORE_PANEL_STATE_SHOW -> {
-                        if (mCurrentShowMoreInputPanel != mSwitchType) switchMorePanel(
-                            mSwitchType
-                        )//加載更多操作面板
-                        else
-                            showSoftInput()
+                        if (mCurrentShowMoreInputPanel != mSwitchType) {//加載更多操作面板
+                            switchMorePanel(mSwitchType)
+                        } else {
+                            mInputEditText?.postDelayed({ showSoftInput() }, 50)
+                        }
+
                     }
                     MORE_PANEL_STATE_HIND -> {
                         switchMorePanel(mSwitchType)//加載更多操作面板
@@ -346,10 +373,8 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
      * 编辑框获取焦点，并显示软件盘
      */
     private fun showSoftInput() {
-        mInputEditText?.postDelayed({
-            mInputEditText?.requestFocus()
-            mInputEditText?.post { mInputManager!!.showSoftInput(mInputEditText, 0) }
-        }, 10)
+        mInputEditText?.requestFocus()
+        mInputEditText?.post { mInputManager!!.showSoftInput(mInputEditText, 0) }
     }
 
     /**
@@ -383,18 +408,27 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
 
     /**手动隐藏更多面板 供外部调用的方法*/
     fun manualHintMorePanel() {
-        if (mMorePanelState == MORE_PANEL_STATE_SHOW) {
-            hideSoftInput()
-            hintMorePanel()
+        isNotDoubleClick().yes {
+            if (mMorePanelState == MORE_PANEL_STATE_SHOW) {
+                hideSoftInput()
+                mVoiceBottom?.postDelayed({
+                    hintMorePanel()
+                }, 50)
+            }
         }
     }
 
     /**显示更多面板 供外部调用的方法*/
     fun manualShowMorePanel(isShowSoft: Boolean) {
-        if (mMorePanelState == MORE_PANEL_STATE_HIND) {
-            showMorePanel()
-            if (isShowSoft) {
-                showSoftInput()
+        isNotDoubleClick().yes {
+            if (mMorePanelState == MORE_PANEL_STATE_HIND) {
+                morePanelGONE()
+                showMorePanel()
+                if (isShowSoft) {
+                    mVoiceBottom?.postDelayed({
+                        showSoftInput()
+                    }, 50)
+                }
             }
         }
     }
@@ -431,6 +465,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         mFragmentTransaction.commitAllowingStateLoss()
     }
 
+    /**语音按钮状态变更*/
     private fun switchVoiceIcon() {
         when (mCurrentVoiceClickState) {
             VOICE_SOFT_KEY_BOARD_INPUT -> {
@@ -446,6 +481,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         }
     }
 
+    /**表情按钮状态变更*/
     private fun switchMotionIcon() {
         when (mCurrentMotionClickState) {
             MOTION_SOFT_KEY_BOARD_INPUT -> {
@@ -460,11 +496,21 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
         }
     }
 
+    /**设置默认状态*/
     private fun onDefault() {
-        mCurrentMotionClickState = MOTION_SOFT_KEY_BOARD_INPUT
-        mCurrentVoiceClickState = VOICE_SOFT_KEY_BOARD_INPUT
+        mCurrentMotionClickState = MOTION_INPUT
+        mCurrentVoiceClickState = VOICE_INPUT
         switchVoiceIcon()
         switchMotionIcon()
         mInputEditText?.clearFocus()
+    }
+
+    /**是否在短时间内双击了*/
+    private fun isNotDoubleClick(): Boolean {
+        (System.currentTimeMillis() - mOldTimeLong < 500).yes {
+            return false
+        }
+        mOldTimeLong = System.currentTimeMillis()
+        return true
     }
 }

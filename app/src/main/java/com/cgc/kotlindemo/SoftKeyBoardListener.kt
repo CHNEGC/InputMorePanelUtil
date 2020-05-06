@@ -14,7 +14,7 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener
 class SoftKeyBoardListener {
     private var rootView //activity的根视图
             : View? = null
-    var rootViewVisibleHeight //纪录根视图的显示高度
+    private var rootViewVisibleHeight //纪录根视图的显示高度
             = 0
     private var onSoftKeyBoardChangeListener: OnSoftKeyBoardChangeListener? = null
 
