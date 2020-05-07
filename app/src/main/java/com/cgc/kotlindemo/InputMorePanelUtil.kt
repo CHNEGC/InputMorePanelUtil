@@ -267,6 +267,7 @@ class InputMorePanelUtil private constructor(val mActivity: Activity) {
 
     /**语音点击*/
     private fun voiceClick() {
+        mCurrentClickState = CLICK_HINT_SOFT_KEY_BOARD
         switchVoiceIcon()
         when (mCurrentVoiceClickState) {
             VOICE_SOFT_KEY_BOARD_INPUT -> {
